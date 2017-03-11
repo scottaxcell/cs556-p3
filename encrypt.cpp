@@ -6,11 +6,14 @@
 #include <fstream>
 #include <iterator>
 #include <bitset>
+#include <cstdint>
+#include <limits>
 
 #define BYTE unsigned char
 #define BITS std::bitset<8>
 #define BITSETSIZE 8
 #define KEYSIZE 10
+#define BYTE_LIMIT std::numeric_limits<BYTE>::max()
 
 
 // ============================================================================
@@ -152,6 +155,119 @@ void tests(std::string fileName, std::vector<BYTE> key1, std::vector<BYTE> key2)
   }
 }
 
+std::vector<std::vector<BYTE>> createMatrix(std::vector<BYTE> &data)
+{
+  std::vector<std::vector<BYTE>> matrix;
+  std::vector<BYTE> v1;
+  if (data.size() < KEYSIZE) {
+    std::cout << "data < KEYSIZE\n";
+    for (auto &c : data)
+      v1.push_back(c);
+    matrix.push_back(v1);
+  } else {
+    for (auto &c : data) {
+      v1.push_back(c);
+      //std::cout << "Adding column element " << v1.size() << std::endl;
+      if (v1.size() == KEYSIZE) {
+        //std::cout << "Adding row\n";
+        matrix.push_back(v1);
+        v1.clear();
+      }
+    }
+    if (v1.size())
+      matrix.push_back(v1);
+  }
+
+  // TODO not sure if xFF will work. maybe use pointers instead with nullptr?
+  std::vector<BYTE> &lastRow = matrix.back();
+  int numToFill = KEYSIZE - lastRow.size();
+  if (numToFill != 0) {
+    //std::cout << "PADDING last row in 2D vector\n";
+    for (int i = 0; i < numToFill; i++) {
+      //std::cout << "added xFF\n";
+      lastRow.push_back(BYTE_LIMIT);
+    }
+  }
+
+  return matrix;
+}
+
+std::vector<int> getTraversalOrder(std::vector<BYTE> &key)
+{
+  std::vector<BYTE> sortedKey(key);
+  std::sort(sortedKey.begin(), sortedKey.end());
+  std::cout << "       key: " << key.size() << ": " << &key[0] << std::endl;
+  std::cout << "sorted key: " << sortedKey.size() << ": " << &sortedKey[0] << std::endl;
+  std::vector<int> traversalOrder;
+  for (auto &sk : sortedKey) {
+    auto it = std::find(key.begin(), key.end(), sk);
+    if (it != key.end()) {
+      traversalOrder.push_back(std::distance(key.begin(), it));
+    } else {
+      std::cerr << "ERROR!\n";
+    }
+  }
+  std::cout << "traverse order key: ";
+  for (auto &i : traversalOrder) {
+    std::cout << i << ",";
+  }
+  std::cout << std::endl;
+
+  return traversalOrder;
+}
+
+std::vector<std::vector<BYTE>> createOrderedMatrix(std::vector<int> &traversalOrder, std::vector<BYTE> &cipherText)
+{
+  int numRows = cipherText.size() / KEYSIZE;
+  std::vector<std::vector<BYTE>> matrix(numRows, std::vector<BYTE>(KEYSIZE, BYTE_LIMIT));
+
+  int rowIdx = 0;
+  int *colIdx = &traversalOrder[0]; 
+  for (auto &c : cipherText) {
+    if (rowIdx == numRows) {
+      rowIdx = 0;
+      colIdx++;
+    }
+    matrix[rowIdx][*colIdx] = c;
+    rowIdx++;
+  }
+
+  for (int i = 0; i < matrix.size(); i++) {
+    for (int j = 0; j < KEYSIZE; j++) {
+      std::cout << matrix[i][j];
+    }
+    std::cout << std::endl;
+  }
+
+  return matrix;
+}
+
+std::vector<BYTE> createCipherText(std::vector<int> &traversalOrder, std::vector<std::vector<BYTE>> &matrix)
+{
+  std::vector<BYTE> cipherText;
+  for (auto &colIdx : traversalOrder) {
+    //std::cout << "Column " << colIdx << std::endl;
+    for (int j = 0; j < matrix.size(); j++) {
+      //std::cout << matrix[j][colIdx] << std::endl;
+      cipherText.push_back(matrix[j][colIdx]);
+    }
+  }
+
+  return cipherText;
+}
+
+std::vector<BYTE> decryptCipherText(std::vector<std::vector<BYTE>> &matrix)
+{
+  std::vector<BYTE> cipherText;
+  for (int i = 0; i < matrix.size(); i++) {
+    for (int j = 0; j < matrix[i].size(); j++) {
+      cipherText.push_back(matrix[i][j]);
+    }
+  }
+
+  return cipherText;
+}
+
 // ============================================================================
 /**
 * Double transposition cipher (encryption)
@@ -161,51 +277,74 @@ std::vector<BYTE> doubleTranspositionCipher(std::vector<BYTE> &c1,
                                             std::vector<BYTE> &key2)
 {
   // Fill 2D vector with c1
-  //std::vector<BYTE> cipher1;
-  //std::string str("helloMyFriend");
-  //for (auto &s : str) {
-  //  cipher1.push_back(reinterpret_cast<BYTE>(s));
-  //} 
-  std::vector<std::vector<BYTE>> twoD;
-  int numBytes = c1.size();
-  int i = 0, j =0;
-  std::vector<BYTE> v1;
+  std::vector<std::vector<BYTE>> m1(createMatrix(c1));
 
-  for (auto &c : c1) {
-  //for (int i = 0; i < numBytes; i++) {
-    v1.push_back(c);
-    //std::cout << "Adding column element " << v1.size() << std::endl;
-    if (v1.size() == KEYSIZE) {
-      //std::cout << "Adding row\n";
-      twoD.push_back(v1);
-      v1.clear();
-    }
-  }
-
-  std::cout << "2D VECTOR" << std::endl;
-  for (int i = 0; i < twoD.size(); i++) {
+  std::cout << "C1: " << c1.size() << ": " << &c1[0] << std::endl;;
+  std::cout << "C1: " << std::endl;
+  for (int i = 0; i < m1.size(); i++) {
     for (int j = 0; j < KEYSIZE; j++) {
-      std::cout << twoD[i][j];
+      std::cout << m1[i][j];
     }
     std::cout << std::endl;
   }
 
-  int rowIdx = 2;
-  std::cout << "Row " << rowIdx  << std::endl;
-  int rowSize = twoD[rowIdx].size();
-  for (int i = 0; i < rowSize; i++) {
-    std::cout << twoD[rowIdx][i] << std::endl;
+  //int rowIdx = 2;
+  //std::cout << "Row " << rowIdx  << std::endl;
+  //int rowSize = m1[rowIdx].size();
+  //for (int i = 0; i < rowSize; i++) {
+  //  std::cout << m1[rowIdx][i] << std::endl;
+  //}
+
+  //int colIdx = 8;
+  //std::cout << "Column " << colIdx  << std::endl;
+  //for (int j = 0; j < m1.size(); j++) {
+  //  std::cout << m1[j][colIdx] << std::endl;
+  //}
+
+  // Figure out which order to traverse columns
+  std::vector<int> keyOrder1(getTraversalOrder(key1));
+
+  // Create C2 by iterating over consecutive columns based on the sorted keys 
+  std::vector<BYTE> c2(createCipherText(keyOrder1, m1));
+  std::cout << "C2: " << c2.size() << ": " << &c2[0] << std::endl;;
+
+  // Create C3 by iterating over consecutive columns based on the sorted keys 
+  std::vector<std::vector<BYTE>> m2(createMatrix(c2));
+  std::vector<int> keyOrder2 = getTraversalOrder(key2);
+  std::vector<BYTE> c3(createCipherText(keyOrder2, m2));
+  std::cout << "C3: " << c3.size() << ": " << &c3[0] << std::endl;;
+
+  // Decrypt C3 to C2(D1)
+  std::vector<std::vector<BYTE>> m3(createOrderedMatrix(keyOrder2, c3));
+  std::vector<BYTE> d1(decryptCipherText(m3));
+  std::cout << "D1: " << d1.size() << ": " << &d1[0] << std::endl;;
+
+  if (d1 != c2) {
+    std::cerr << "ERROR: transposition from second matrix to first cipher failed\n";
+    std::cout << "C2: " << c2.size() << ": " << &c2[0] << std::endl;;
+    std::cout << "D1: " << d1.size() << ": " << &d1[0] << std::endl;;
   }
 
-  int colIdx = 8;
-  std::cout << "Column " << colIdx  << std::endl;
-  for (int j = 0; j < twoD.size(); j++) {
-    std::cout << twoD[j][colIdx] << std::endl;
+  // Decrypt C2 to C1(D2)
+  std::vector<std::vector<BYTE>> m4(createOrderedMatrix(keyOrder1, d1));
+  std::vector<BYTE> d2(decryptCipherText(m4));
+  std::cout << "D2: " << d2.size() << ": " << &d2[0] << std::endl;;
+
+  int numToRemove = d2.size() - c1.size();
+  if (numToRemove > 0) {
+    for (int i = 0; i < numToRemove; i++)
+      d2.pop_back();
+  }
+  if (d2 != c1) {
+    std::cerr << "ERROR: transposition from first matrix to vegenere cipher failed\n";
+    std::cout << "C1: " << c1.size() << ": " << &c1[0] << std::endl;;
+    std::cout << "D2: " << d2.size() << ": " << &d2[0] << std::endl;;
   }
 
-  // TODO sort key in order
-  // TODO iterate on consecutive columns creating groups of 5
-  // TODO push_back the groups of 5 to into a vector
+  //if (c3 != d1) {
+  //  std::cerr << "ERROR: decryption from C3 to 
+
+  return c3;
 
 }
 
