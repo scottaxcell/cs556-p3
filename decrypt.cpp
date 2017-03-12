@@ -319,7 +319,7 @@ std::vector<BYTE> doubleTranspositionCipher(std::vector<BYTE> &c1,
 std::string getFileName()
 {
   std::string fileName;
-  std::cout << "Please provide binary file to be encrypted: ";
+  std::cout << "Please provide binary file to be decrypted: ";
   std::getline(std::cin, fileName);
   return fileName;
 }
@@ -355,7 +355,7 @@ void writeOutput(std::vector<BYTE> &data, std::string &fileName)
 int main(int argc, char *argv[])
 {
   std::cout << "/* =======" << std::endl;
-  std::cout << "/* Encrypt" << std::endl;
+  std::cout << "/* Decrypt" << std::endl;
   std::cout << "/* =======" << std::endl;
   if (argc != 3) {
     std::cerr << "USAGE: ./encrypt <key_1> <key_2>" << std::endl;
@@ -385,33 +385,32 @@ int main(int argc, char *argv[])
   /**
   * Get binary file name
   */
-  // TODO
   std::string fileName = getFileName();
  
   // ==========================================================================
   /**
   * Read binary file into memory
   */
-  std::vector<BYTE> plainText(readBinaryFile(fileName));
-  std::cout << "Read " << plainText.size() << " bytes from plaintext '" << fileName << "'" << std::endl;
+  std::vector<BYTE> cipherText(readBinaryFile(fileName));
+  std::cout << "Read " << cipherText.size() << " bytes from ciphertext '" << fileName << "'" << std::endl;
 
   // ==========================================================================
   /**
   * Tests
   */
   //tests(fileName, key1, key2);
-  
-  // ==========================================================================
-  /**
-  * Generate C1 using Vigenere cipher
-  */
-  std::vector<BYTE> c1(vigenereCipher(plainText, key1));
 
   // ==========================================================================
   /**
   * Generate C3 using double transposition cipher
   */
-  std::vector<BYTE> c3(doubleTranspositionCipher(c1, key1, key2));
+  std::vector<BYTE> c1(decryptTranspositionCipher(cipherText, key1, key2));
+
+  // ==========================================================================
+  /**
+  * Generate C1 using Vigenere cipher
+  */
+  std::vector<BYTE> plainText(vigenereCipher(c1, key1));
 
   /*DEBUG*/
   //writeOutput(c3, encryptedFile);
@@ -434,7 +433,7 @@ int main(int argc, char *argv[])
   /**
   * Write encrypted file
   */
-  writeOutput(c3, encryptedFile);
+  writeOutput(plainText, decryptedFile);
 
   return 0;
 }

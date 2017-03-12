@@ -1,14 +1,14 @@
 #!/bin/bash
 #
 
-KEY1=CORNFLAKES
-KEY2=BLACKHORSE
-PLAINTEXT=large.binary
+KEY1=asdnvoqweuruiueruitvzlalapq
+KEY2=qpowiwqenslkansascbasdoubfsfg
+PLAINTEXT=BobRoss.jpg
 ENCRYPTED=scott-axcell-encrypted-str
 DECRYPTED=scott-axcell-decrypted-str
 
-./encrypt ${KEY1} ${KEY2} ${PLAINTEXT}
+./encrypt ${KEY1} ${KEY2}
 
-#./decrypt ${KEY1} ${KEY2} ${ENCRYPTED}
+./decrypt ${KEY1} ${KEY2}
 
 diff ${PLAINTEXT} ${DECRYPTED}
