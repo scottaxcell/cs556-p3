@@ -10,8 +10,6 @@
 #include <limits>
 
 #define BYTE unsigned char
-#define BITS std::bitset<8>
-#define BITSETSIZE 8
 #define KEYSIZE 10
 #define BYTE_LIMIT std::numeric_limits<BYTE>::max()
 
@@ -45,30 +43,6 @@ std::vector<BYTE> uniquifyKey(std::string key)
   return uniqueKey;
 }
 
-std::vector<std::bitset<8>>
-bytesToBitsets(std::vector<BYTE> &bytes)
-{
-  std::vector<std::bitset<8>> bits;
-  bits.reserve(bytes.size());
-  for (auto &byte : bytes) {
-    bits.push_back(std::bitset<8>(byte));
-  }
-  return bits;
-}
-
-std::vector<BYTE>
-bitsetsToBytes(std::vector<std::bitset<8>> &bits)
-{
-  std::vector<BYTE> bytes;
-  bits.reserve(bits.size());
-  for (auto &bitset : bits) {
-    unsigned long l = bitset.to_ulong(); 
-    BYTE c = static_cast<BYTE>(l);
-    bytes.push_back(c);
-  }
-  return bytes;
-}
-
 // ============================================================================
 /**
 * Read binary file
@@ -91,6 +65,8 @@ std::vector<BYTE> readBinaryFile(std::string fileName)
   result.insert(result.begin(),
              std::istream_iterator<BYTE>(ifs),
              std::istream_iterator<BYTE>());
+
+  ifs.close();
 
   return result;
 }
@@ -143,16 +119,6 @@ void tests(std::string fileName, std::vector<BYTE> key1, std::vector<BYTE> key2)
     std::cerr << "SUCCESS: vigenere cipher success" << std::endl;
   }
 
-  //
-  // BYTES/BITSETS
-  // 
-  std::vector<std::bitset<8>> bitsets = bytesToBitsets(plainText);
-  std::vector<BYTE> bytes = bitsetsToBytes(bitsets);
-  if (bytes != plainText) {
-    std::cout << "FAILUE: bytes/bitsets converion failed" << std::endl;
-  } else {
-    std::cout << "SUCCESS: bytes/bitsets converion success" << std::endl;
-  }
 }
 
 std::vector<std::vector<BYTE>> createMatrix(std::vector<BYTE> &data)
@@ -350,6 +316,23 @@ std::vector<BYTE> doubleTranspositionCipher(std::vector<BYTE> &c1,
 
 // ============================================================================
 /**
+* Write data to binary file
+*/
+void writeOutput(std::vector<BYTE> &data, std::string &fileName)
+{
+  std::ofstream ofs(fileName, std::ios::trunc | std::ios::binary | std::ios::out);
+  if (!ofs.good()) {
+    std::cerr << "ERROR: not able to write file '" << fileName << "'" << std::endl;
+    exit(1);
+  }
+
+  ofs.write((const char*)&data[0], data.size());
+  ofs.close();
+  std::cout << "Wrote " << fileName << std::endl;
+}
+
+// ============================================================================
+/**
 * Main
 */
 int main(int argc, char *argv[])
@@ -420,8 +403,7 @@ int main(int argc, char *argv[])
   /**
   * Write encrypted file
   */
-  // TODO
-  //void writeOutput(c3, encryptedFile);
+  writeOutput(c3, encryptedFile);
 
   return 0;
 }
