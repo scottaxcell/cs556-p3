@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <limits>
 
-#define BYTE unsigned char
+#define BYTE char
 #define KEYSIZE 10
 #define BYTE_LIMIT std::numeric_limits<BYTE>::max()
 
@@ -54,19 +54,13 @@ std::vector<BYTE> readBinaryFile(std::string fileName)
     std::cerr << "ERROR: not able to open file '" << fileName << "'" << std::endl;
     exit(1);
   }
-  std::streampos fileSize;
 
   ifs.seekg(0, std::ios::end);
-  fileSize = ifs.tellg();
+  std::streampos fileSize = ifs.tellg();
+  std::vector<BYTE> result(fileSize);
+
   ifs.seekg(0, std::ios::beg);
-
-  std::vector<BYTE> result;
-  result.reserve(fileSize);
-  result.insert(result.begin(),
-             std::istream_iterator<BYTE>(ifs),
-             std::istream_iterator<BYTE>());
-
-  ifs.close();
+  ifs.read(result.data(), fileSize);
 
   return result;
 }
@@ -110,9 +104,9 @@ void tests(std::string fileName, std::vector<BYTE> key1, std::vector<BYTE> key2)
   // 
   std::vector<BYTE> c1(vigenereCipher(plainText, key1));
   std::vector<BYTE> p1(vigenereCipher(c1, key1));
-  /*DEBUG*/std::cout << "DEBUG  original: " << &plainText[0] << std::endl;
-  /*DEBUG*/std::cout << "DEBUG encrypted: " << &c1[0] << std::endl;
-  /*DEBUG*/std::cout << "DEBUG decrypted: " << &p1[0] << std::endl;
+  ///*DEBUG*/std::cout << "DEBUG  original: " << &plainText[0] << std::endl;
+  ///*DEBUG*/std::cout << "DEBUG encrypted: " << &c1[0] << std::endl;
+  ///*DEBUG*/std::cout << "DEBUG decrypted: " << &p1[0] << std::endl;
   if (plainText != p1) {
     std::cerr << "FAILURE: vigenere cipher failed" << std::endl;
   } else {
@@ -126,7 +120,7 @@ std::vector<std::vector<BYTE>> createMatrix(std::vector<BYTE> &data)
   std::vector<std::vector<BYTE>> matrix;
   std::vector<BYTE> v1;
   if (data.size() < KEYSIZE) {
-    std::cout << "data < KEYSIZE\n";
+    //std::cout << "data < KEYSIZE\n";
     for (auto &c : data)
       v1.push_back(c);
     matrix.push_back(v1);
@@ -162,8 +156,8 @@ std::vector<int> getTraversalOrder(std::vector<BYTE> &key)
 {
   std::vector<BYTE> sortedKey(key);
   std::sort(sortedKey.begin(), sortedKey.end());
-  std::cout << "       key: " << key.size() << ": " << &key[0] << std::endl;
-  std::cout << "sorted key: " << sortedKey.size() << ": " << &sortedKey[0] << std::endl;
+  //std::cout << "       key: " << key.size() << ": " << &key[0] << std::endl;
+  //std::cout << "sorted key: " << sortedKey.size() << ": " << &sortedKey[0] << std::endl;
   std::vector<int> traversalOrder;
   for (auto &sk : sortedKey) {
     auto it = std::find(key.begin(), key.end(), sk);
@@ -173,11 +167,11 @@ std::vector<int> getTraversalOrder(std::vector<BYTE> &key)
       std::cerr << "ERROR!\n";
     }
   }
-  std::cout << "traverse order key: ";
-  for (auto &i : traversalOrder) {
-    std::cout << i << ",";
-  }
-  std::cout << std::endl;
+  //std::cout << "traverse order key: ";
+  //for (auto &i : traversalOrder) {
+  //  std::cout << i << ",";
+  //}
+  //std::cout << std::endl;
 
   return traversalOrder;
 }
@@ -198,12 +192,12 @@ std::vector<std::vector<BYTE>> createOrderedMatrix(std::vector<int> &traversalOr
     rowIdx++;
   }
 
-  for (int i = 0; i < matrix.size(); i++) {
-    for (int j = 0; j < KEYSIZE; j++) {
-      std::cout << matrix[i][j];
-    }
-    std::cout << std::endl;
-  }
+  //for (int i = 0; i < matrix.size(); i++) {
+  //  for (int j = 0; j < KEYSIZE; j++) {
+  //    std::cout << matrix[i][j];
+  //  }
+  //  std::cout << std::endl;
+  //}
 
   return matrix;
 }
@@ -236,6 +230,38 @@ std::vector<BYTE> decryptCipherText(std::vector<std::vector<BYTE>> &matrix)
 
 // ============================================================================
 /**
+* Double transposition cipher (decryption)
+*/
+std::vector<BYTE> decryptTranspositionCipher(std::vector<BYTE> &c1,
+                                             std::vector<BYTE> &key1, 
+                                             std::vector<BYTE> &key2)
+{
+  // Decrypt C3 to C2(D1)
+  std::vector<int> keyOrder2 = getTraversalOrder(key2);
+  std::vector<std::vector<BYTE>> m3(createOrderedMatrix(keyOrder2, c1));
+  std::vector<BYTE> d1(decryptCipherText(m3));
+  std::cout << "D1: " << d1.size() << ": " << &d1[0] << std::endl;;
+
+  // Decrypt C2 to C1(D2)
+  std::vector<int> keyOrder1(getTraversalOrder(key1));
+  std::vector<std::vector<BYTE>> m4(createOrderedMatrix(keyOrder1, d1));
+  std::vector<BYTE> d2(decryptCipherText(m4));
+  std::cout << "D2: " << d2.size() << ": " << &d2[0] << std::endl;;
+
+  auto ri = d2.rbegin();
+  auto rend = d2.rend();
+  for (; ri != rend; ++ri) {
+    if (*ri == BYTE_LIMIT)
+      d2.pop_back();
+    else
+      break;
+  }
+  return d2;
+
+}
+
+// ============================================================================
+/**
 * Double transposition cipher (encryption)
 */
 std::vector<BYTE> doubleTranspositionCipher(std::vector<BYTE> &c1,
@@ -246,13 +272,13 @@ std::vector<BYTE> doubleTranspositionCipher(std::vector<BYTE> &c1,
   std::vector<std::vector<BYTE>> m1(createMatrix(c1));
 
   std::cout << "C1: " << c1.size() << ": " << &c1[0] << std::endl;;
-  std::cout << "C1: " << std::endl;
-  for (int i = 0; i < m1.size(); i++) {
-    for (int j = 0; j < KEYSIZE; j++) {
-      std::cout << m1[i][j];
-    }
-    std::cout << std::endl;
-  }
+  //std::cout << "C1: " << std::endl;
+  //for (int i = 0; i < m1.size(); i++) {
+  //  for (int j = 0; j < KEYSIZE; j++) {
+  //    std::cout << m1[i][j];
+  //  }
+  //  std::cout << std::endl;
+  //}
 
   //int rowIdx = 2;
   //std::cout << "Row " << rowIdx  << std::endl;
@@ -283,7 +309,7 @@ std::vector<BYTE> doubleTranspositionCipher(std::vector<BYTE> &c1,
   // Decrypt C3 to C2(D1)
   std::vector<std::vector<BYTE>> m3(createOrderedMatrix(keyOrder2, c3));
   std::vector<BYTE> d1(decryptCipherText(m3));
-  std::cout << "D1: " << d1.size() << ": " << &d1[0] << std::endl;;
+  //std::cout << "D1: " << d1.size() << ": " << &d1[0] << std::endl;;
 
   if (d1 != c2) {
     std::cerr << "ERROR: transposition from second matrix to first cipher failed\n";
@@ -294,7 +320,7 @@ std::vector<BYTE> doubleTranspositionCipher(std::vector<BYTE> &c1,
   // Decrypt C2 to C1(D2)
   std::vector<std::vector<BYTE>> m4(createOrderedMatrix(keyOrder1, d1));
   std::vector<BYTE> d2(decryptCipherText(m4));
-  std::cout << "D2: " << d2.size() << ": " << &d2[0] << std::endl;;
+  //std::cout << "D2: " << d2.size() << ": " << &d2[0] << std::endl;;
 
   int numToRemove = d2.size() - c1.size();
   if (numToRemove > 0) {
@@ -307,11 +333,7 @@ std::vector<BYTE> doubleTranspositionCipher(std::vector<BYTE> &c1,
     std::cout << "D2: " << d2.size() << ": " << &d2[0] << std::endl;;
   }
 
-  //if (c3 != d1) {
-  //  std::cerr << "ERROR: decryption from C3 to 
-
   return c3;
-
 }
 
 // ============================================================================
@@ -328,7 +350,14 @@ void writeOutput(std::vector<BYTE> &data, std::string &fileName)
 
   ofs.write((const char*)&data[0], data.size());
   ofs.close();
-  std::cout << "Wrote " << fileName << std::endl;
+
+  std::ifstream ifs(fileName, std::ios::binary | std::ios::in);
+  std::streampos fileSize;
+  ifs.seekg(0, std::ios::end);
+  fileSize = ifs.tellg();
+  ifs.close();
+
+  std::cout << "Wrote " << fileSize << " bytes to " << fileName << std::endl;
 }
 
 // ============================================================================
@@ -378,14 +407,14 @@ int main(int argc, char *argv[])
   /**
   * Read binary file into memory
   */
-  std::vector<BYTE> plainText = readBinaryFile(fileName);
+  std::vector<BYTE> plainText(readBinaryFile(fileName));
   /*DEBUG*/std::cout << "DEBUG Read " << plainText.size() << " bytes from " << fileName << std::endl;
 
   // ==========================================================================
   /**
   * Tests
   */
-  tests(fileName, key1, key2);
+  //tests(fileName, key1, key2);
   
   // ==========================================================================
   /**
@@ -399,11 +428,26 @@ int main(int argc, char *argv[])
   */
   std::vector<BYTE> c3(doubleTranspositionCipher(c1, key1, key2));
 
+  writeOutput(c3, encryptedFile);
+
+  std::cout << "Expected C3: " << c3.size() << ": " << &c3[0] << std::endl;;
+  c3 = readBinaryFile(encryptedFile);
+  std::cout << "Read     C3: " << c3.size() << ": " << &c3[0] << std::endl;;
+
+  std::vector<BYTE> d1(decryptTranspositionCipher(c3, key1, key2));
+
+  std::vector<BYTE> p1(vigenereCipher(d1, key1));
+
+  std::cout << "P0: " << plainText.size() << ": " << &plainText[0] << std::endl;;
+  std::cout << "P1: " << p1.size() << ": " << &p1[0] << std::endl;;
+
+  writeOutput(p1, decryptedFile);
+
   // ==========================================================================
   /**
   * Write encrypted file
   */
-  writeOutput(c3, encryptedFile);
+  //writeOutput(c3, encryptedFile);
 
   return 0;
 }

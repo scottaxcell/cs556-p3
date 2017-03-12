@@ -14,6 +14,8 @@ endif
 
 all:
 	$(G++) -std=c++11 -o encrypt encrypt.cpp
+	$(G++) -std=c++11 -o decrypt decrypt.cpp
 
 clean:
 	rm -f encrpyt
+	rm -f decrpyt
