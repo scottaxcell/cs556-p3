@@ -21,7 +21,8 @@ decrypt: decrypt.cpp
 	$(G++) -std=c++11 -o decrypt decrypt.cpp
 
 asymmetrickey_encr: asymmetrickey_encr.cpp rsa.h
-	$(G++) -std=c++11 -o asymmetrickey_encr asymmetrickey_encr.cpp -I/usr/local/Cellar/gmp/6.1.0/include -L/usr/local/Cellar/gmp/6.1.0/lib -lgmp -lgmpxx
+	$(G++) -std=c++11 -o asymmetrickey_encr asymmetrickey_encr.cpp -lgmp -lgmpxx
+	#$(G++) -std=c++11 -o asymmetrickey_encr asymmetrickey_encr.cpp -I/usr/local/Cellar/gmp/6.1.0/include -L/usr/local/Cellar/gmp/6.1.0/lib -lgmp -lgmpxx
 
 asymmetrickey_decr: asymmetrickey_decr.cpp rsa.h
 	$(G++) -std=c++11 -o asymmetrickey_decr asymmetrickey_decr.cpp
