@@ -46,8 +46,6 @@ struct RSAKey
 */
 void findLargePrime(mpz_t largePrime)
 {
-  // Initialize random number generator
-  std::srand(std::time(nullptr)); 
   uint32_t randomNum = rand();
   std::cout << "randomNum: " << randomNum << std::endl;
 
@@ -150,7 +148,6 @@ RSAKey generareRSAKey()
 {
   RSAKey rsaKey;
 
-  // TODO p and q are not different, fix this!
   // Find two large prime numbers, p and q
   mpz_t p;
   mpz_init(p);
