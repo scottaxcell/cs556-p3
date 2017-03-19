@@ -12,10 +12,22 @@ ifeq ($(UNAME_S),Darwin)
   G++ := /usr/local/Cellar/gcc/5.3.0/bin/g++-5
 endif
 
-all:
+all: encrypt decrypt asymmetrickey_encr asymmetrickey_decr
+
+encrypt: encrypt.cpp
 	$(G++) -std=c++11 -o encrypt encrypt.cpp
+
+decrypt: decrypt.cpp
 	$(G++) -std=c++11 -o decrypt decrypt.cpp
+
+asymmetrickey_encr: asymmetrickey_encr.cpp rsa.h
+	$(G++) -std=c++11 -o asymmetrickey_encr asymmetrickey_encr.cpp -I/usr/local/Cellar/gmp/6.1.0/include -L/usr/local/Cellar/gmp/6.1.0/lib -lgmp -lgmpxx
+
+asymmetrickey_decr: asymmetrickey_decr.cpp rsa.h
+	$(G++) -std=c++11 -o asymmetrickey_decr asymmetrickey_decr.cpp
 
 clean:
 	rm -f encrpyt
 	rm -f decrpyt
+	rm -f asymmetrickey_encr
+	rm -f asymmetrickey_decr
