@@ -27,7 +27,7 @@ asymmetrickey_encr: asymmetrickey_encr.cpp rsa.h
 	$(G++) -std=c++11 -o asymmetrickey_encr asymmetrickey_encr.cpp -lgmp -lgmpxx
 
 asymmetrickey_decr: asymmetrickey_decr.cpp rsa.h
-	$(G++) -std=c++11 -o asymmetrickey_decr asymmetrickey_decr.cpp
+	$(G++) -std=c++11 -o asymmetrickey_decr asymmetrickey_decr.cpp -lgmp -lgmpxx
 
 clean:
 	rm -f encrpyt

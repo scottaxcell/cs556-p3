@@ -1,8 +1,5 @@
 #include "rsa.h"
 
-  //// Get the string representation of the cipher
-  //mpz_get_str(ciphertext,10,c);
-
 // ============================================================================
 /**
 * Encrypt block
