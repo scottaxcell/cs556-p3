@@ -63,7 +63,7 @@ std::string readFirstLineOfFile(std::string &fileName)
 
 // ============================================================================
 /**
-* Generates a RSAKey struct
+* Find a large prime number
 */
 void findLargePrime(mpz_t largePrime)
 {
@@ -82,7 +82,7 @@ void findLargePrime(mpz_t largePrime)
   mpz_set(largePrime, primeNum);
 
   free(str);
-  std::cout << "largePrime: " << largePrime << std::endl;
+  //std::cout << "largePrime: " << largePrime << std::endl;
 }
 
 // ============================================================================
@@ -132,18 +132,19 @@ bool isEValid(mpz_t totient, mpz_t e)
 */
 void findE(mpz_t totient, mpz_t e)
 {
-  mpz_t _e;
-  mpz_init(_e);
+  // Suggested value of e is, prime number 65537, to make calculations faster 
+  unsigned long int _e = 65537;
+  mpz_t gcd;
+  mpz_init(gcd);
   
-  mpz_t decr;
-  mpz_init(decr);
-  mpz_set_ui(decr, 1);
-  mpz_sub(_e, totient, decr);
-
-  while (!isEValid(totient, _e))
-    mpz_sub(_e, _e, decr);
+  while (true) {
+    mpz_gcd_ui(gcd, totient, _e);
+    if (mpz_cmp_ui(gcd, (unsigned long int)1) == 0)
+      break;
+    _e += 2;
+  }
   
-  mpz_set(e, _e);
+  mpz_set_ui(e, _e);
 }
 
 // ============================================================================
@@ -206,8 +207,6 @@ RSAKey generareRSAKey()
   mpz_init(d);
   findD(e, totient, d);
   std::cout << "d: " << d << std::endl;
-
-  // TODO e and d are the same number, look into this!
 
   PublicRSAKey pubKey;
   mpz_set(pubKey.e, e);
