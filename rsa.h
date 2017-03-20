@@ -1,11 +1,16 @@
+#ifndef SGA_RSA_H
+#define SGA_RSA_H
+
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <fstream>
 
 #include <gmp.h>
+#include <gmpxx.h>
 
-#ifndef SGA_RSA_H
-#define SGA_RSA_H
+#define KEYSIZE 1024//4096
+#define PRIMESIZE (KEYSIZE / 2)
 
 struct PublicRSAKey
 {
@@ -37,8 +42,24 @@ struct RSAKey
 
 // ============================================================================
 /**
-* 
+* Reads first line of a file
 */
+std::string readFirstLineOfFile(std::string &fileName)
+{
+  std::ifstream ifs(fileName, std::ios::in);
+  if (!ifs.good()) {
+    std::cerr << "ERROR: not able to open file '" << fileName << "'" << std::endl;
+    exit(1);
+  }
+
+  std::string line;
+  std::getline(ifs, line);
+  ifs.close();
+
+  std::cout << "Read: " << line << std::endl;
+
+  return line;
+}
 
 // ============================================================================
 /**
@@ -46,19 +67,21 @@ struct RSAKey
 */
 void findLargePrime(mpz_t largePrime)
 {
-  uint32_t randomNum = rand();
-  std::cout << "randomNum: " << randomNum << std::endl;
+  char *str = new char[PRIMESIZE + 1];
+  str[0] = '1';
+  for (int i = 1; i < PRIMESIZE; i++) {
+    int binary = (int)(rand() % 2);
+    str[i] = binary + '0';
+  }
+  str[PRIMESIZE] = '\0';
 
   mpz_t primeNum;
-  // Initialize 0
   mpz_init(primeNum);
-  // Set to random number
-  mpz_set_ui(primeNum, randomNum);
-  // Set to next prime number
+  mpz_set_str(primeNum, str, 2);
   mpz_nextprime(primeNum, primeNum);
-  // Set result to prime number found
   mpz_set(largePrime, primeNum);
-  
+
+  free(str);
   std::cout << "largePrime: " << largePrime << std::endl;
 }
 
