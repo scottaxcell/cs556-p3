@@ -372,20 +372,20 @@ int main(int argc, char *argv[])
   * Read Key1
   */
   std::vector<BYTE> key1 = uniquifyKey(keyStr1);
-  std::cout << "Using Key 1: " << &key1[0] << std::endl;
+  std::cout << "Using Key 1: " << std::string(key1.begin(), key1.end()) << std::endl;
 
   // ==========================================================================
   /**
   * Read Key2
   */
   std::vector<BYTE> key2 = uniquifyKey(keyStr2);
-  std::cout << "Using Key 2: " << &key2[0] << std::endl;
+  std::cout << "Using Key 2: " << std::string(key2.begin(), key2.end()) << std::endl;
 
   // ==========================================================================
   /**
   * Get binary file name
   */
-  std::string fileName = getFileName();
+  std::string fileName = encryptedFile;
  
   // ==========================================================================
   /**

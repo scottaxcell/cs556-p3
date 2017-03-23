@@ -30,8 +30,8 @@ asymmetrickey_decr: asymmetrickey_decr.cpp rsa.h
 	$(G++) -std=c++11 -o asymmetrickey_decr asymmetrickey_decr.cpp -lgmp -lgmpxx
 
 clean:
-	rm -f encrpyt
-	rm -f decrpyt
+	rm -f encrypt
+	rm -f decrypt
 	rm -f genRSAKey
 	rm -f asymmetrickey_encr
 	rm -f asymmetrickey_decr

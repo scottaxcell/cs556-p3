@@ -9,17 +9,12 @@ How to compile
 $ make all
 
 
-How to clean
-============
-$ make clean
-
-
 How to execute
 ==============
 Encryption:
 $ ./encrypt <key_1> <key_2>
+You will then be prompted for a file to encrypt.
 
 Decryption:
 $ ./decrypt <key_1> <key_2>
-
 
