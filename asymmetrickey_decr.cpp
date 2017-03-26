@@ -2,12 +2,31 @@
 
 // ============================================================================
 /**
-* Decrypt block
+* Convert integer string to equivalent char string
 */
-void decryptBlock(PrivateRSAKey privKey, mpz_t m, mpz_t c)
+std::string convertIntToChar(char *intStr)
 {
-  // c = m^e mod n
-  mpz_powm(c, m, privKey.d, privKey.n);
+  std::string result;
+  char *tmpStr = new char[strlen(intStr) + 1];
+
+  // Pad integer string with zeros if necesary
+  int modulus = strlen(intStr) % 3;
+  if (modulus == 1)
+    strcpy(tmpStr, "00");
+  else if (modulus == 2)
+    strcpy(tmpStr, "0");
+  strcat(tmpStr, intStr);
+
+  for (int i = 0; i <= (strlen(tmpStr) - 3); i += 3) {
+    int n = tmpStr[i] - '0';
+    n = n * 10 + (tmpStr[i + 1] - '0');
+    n = n * 10 + (tmpStr[i + 2] - '0');
+    result.push_back((char)n);
+  }
+
+  delete[] tmpStr;
+
+  return result;
 }
 
 // ============================================================================
@@ -17,6 +36,37 @@ void decryptBlock(PrivateRSAKey privKey, mpz_t m, mpz_t c)
 std::string decryptCipherText(PrivateRSAKey privKey, std::string &cipherText)
 {
   std::string plainText;
+  int i = 0;
+  int blockSize = 1000;
+  std::string blockStr;
+  std::string::const_iterator it = cipherText.begin();
+  std::string::const_iterator end = cipherText.end();
+  for ( ; it != end; ++it) {
+    if ((i == (blockSize - 1)) ||
+        (std::distance(it, end) == 1)) {
+      // Have a block of correct size or reached the end of the string
+      blockStr.push_back(*it);
+      std::cout << "block: '" << blockStr << "' size: " << blockStr.size() << std::endl;
+      mpz_t m;
+      mpz_init(m);
+      mpz_t c;
+      mpz_init(c);
+      mpz_set_str(c, blockStr.c_str(), 10);
+      mpz_powm(m, c, privKey.d, privKey.n);
+      char *dStr = mpz_get_str(nullptr, 10, m);
+      std::cout << "ds: " << strlen(dStr) << std::endl;
+      plainText += convertIntToChar(dStr);
+      void (*freefunc)(void *, size_t);
+      mp_get_memory_functions(nullptr, nullptr, &freefunc);
+      freefunc(dStr, strlen(dStr) + 1);
+      i = 0;
+      blockStr.clear();
+    } else {
+      blockStr.push_back(*it);
+      i++;
+    }
+  }
+
   return plainText;
 }
 
@@ -73,7 +123,7 @@ int main(int argc, char *argv[])
   std::string cipherText = readFirstLineOfFile(cipherTextFile);
   std::string plainText = decryptCipherText(privKey, cipherText);
   std::cout << "CipherText: " << cipherText << std::endl;
-  std::cout << "PlainText: " << plainText << std::endl;
+  //std::cout << "PlainText: " << plainText << std::endl;
   writePlainText(plainText);
 
   return 0;

@@ -51,10 +51,15 @@ std::string encryptPlainText(PublicRSAKey pubKey, std::string &plainText)
       mpz_init(c);
       encryptBlock(pubKey, m, c);
       std::cout << "c: " << c << std::endl;
-      char cStr[1000];
+      char *cStr = mpz_get_str(nullptr, 10, c);
       mpz_get_str(cStr, 10, c);
+      std::cout << "cs: " << strlen(cStr) << std::endl;
       cipherText.append(cStr);   
+      void (*freefunc)(void *, size_t);
+      mp_get_memory_functions(nullptr, nullptr, &freefunc);
+      freefunc(cStr, strlen(cStr) + 1);
       i = 0;
+      blockStr.clear();
     } else {
       blockStr.push_back(*it);
       i++;

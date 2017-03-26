@@ -12,7 +12,7 @@ ifeq ($(UNAME_S),Darwin)
   G++ := /usr/local/Cellar/gcc/5.3.0/bin/g++-5
 endif
 
-all: encrypt decrypt asymmetrickey_encr asymmetrickey_decr
+all: genRSAKey encrypt decrypt asymmetrickey_encr asymmetrickey_decr
 
 encrypt: encrypt.cpp
 	$(G++) -std=c++11 -o encrypt encrypt.cpp

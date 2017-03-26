@@ -5,6 +5,7 @@
 #include <string>
 #include <ctime>
 #include <fstream>
+#include <sstream>
 
 #include <gmp.h>
 #include <gmpxx.h>
