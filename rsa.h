@@ -10,7 +10,7 @@
 #include <gmp.h>
 #include <gmpxx.h>
 
-#define KEYSIZE 1024//4096
+#define KEYSIZE 4096
 #define PRIMESIZE (KEYSIZE / 2)
 
 struct PublicRSAKey
@@ -57,7 +57,7 @@ std::string readFirstLineOfFile(std::string &fileName)
   std::getline(ifs, line);
   ifs.close();
 
-  std::cout << "Read: " << line << std::endl;
+  //std::cout << "Read: " << line << std::endl;
 
   return line;
 }

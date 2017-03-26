@@ -13,6 +13,6 @@ DECRYPTED=scott-axcell-decrypted-str
 #
 #diff ${PLAINTEXT} ${DECRYPTED}
 ./genRSAKey
-./asymmetrickey_encr pub.pem plainText.txt
+./asymmetrickey_encr pub.pem plainText.txt.large
 ./asymmetrickey_decr priv.pem scott-axcell.ciphertext
-diff plainText.txt scott-axcell.plaintext
+diff plainText.txt.large scott-axcell.plaintext

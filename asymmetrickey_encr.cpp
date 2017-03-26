@@ -2,90 +2,50 @@
 
 // ============================================================================
 /**
-* Encrypt block
-*/
-void encryptBlock(PublicRSAKey pubKey, mpz_t m, mpz_t c)
-{
-  // c = m^e mod n
-  mpz_powm(c, m, pubKey.e, pubKey.n);
-}
-
-// ============================================================================
-/**
 * Encrypt plaintext
 */
-std::string encryptPlainText(PublicRSAKey pubKey, std::string &plainText)
+void encryptPlainText(PublicRSAKey pubKey, std::string &plainText)
 {
-  std::string cipherText;
+  FILE *of = fopen("scott-axcell.ciphertext", "w+");
 
-  int i = 0;
-  int blockSize = 100;
-  std::string blockStr;
+  int i = 0, j = 0;
+  char tmp[4];
+  int blockSize = (strlen(mpz_get_str(nullptr, 10, pubKey.n)) - 1) / 3;
+  int *block = (int *)calloc(blockSize + 1, sizeof(int));
+  char *cBlock = (char *)calloc(blockSize * 3 + 1, sizeof(char));
   std::string::const_iterator it = plainText.begin();
   std::string::const_iterator end = plainText.end();
-  for ( ; it != end; ++it) {
-    if ((i == (blockSize - 1)) ||
-        (std::distance(it, end) == 1)) {
-      // Have a block of correct size or reached the end of the string
-      blockStr.push_back(*it);
-      std::cout << "block: '" << blockStr << "' size: " << blockStr.size() << std::endl;
-
-      // Convert m to ascii integer equivalent
-      char *intStr = new char[blockStr.size() * 3 + 1];
-      intStr[0] = '\0';
-      for (int j = 0; j < blockStr.size(); j++) {
-        int tmpInt = (int)blockStr[j];
-        char tmpChars[4];
-        sprintf(tmpChars, "%03d", tmpInt);
-        strcat(intStr, tmpChars);
-      }
-      std::cout << "intStr: '" << intStr << "' size: " << strlen(intStr) << std::endl;
-
-      mpz_t m;
-      mpz_init(m);
-      mpz_set_str(m, intStr, 10);
-      std::cout << "m: " << m << std::endl;
-      delete[] intStr;
-
-      mpz_t c;
-      mpz_init(c);
-      // c = m^e mod n
-      mpz_powm(c, m, pubKey.e, pubKey.n);
-      std::cout << "c: " << c << std::endl;
-      char *cStr = mpz_get_str(nullptr, 10, c);
-      mpz_get_str(cStr, 10, c);
-      std::cout << "cs: " << strlen(cStr) << std::endl;
-      cipherText.append(cStr);   
-      void (*freefunc)(void *, size_t);
-      mp_get_memory_functions(nullptr, nullptr, &freefunc);
-      freefunc(cStr, strlen(cStr) + 1);
-      i = 0;
-      blockStr.clear();
-    } else {
-      blockStr.push_back(*it);
-      i++;
+  while (it != end) {
+    for (i = 0; i < blockSize && it != end; i++) {
+      block[i] = (char)*it;
+      block[i + 1] = 0;
+      it++;
     }
+    for (j = 0; j < i; j++) {
+      sprintf(tmp, "%d", block[j]);
+      strcat(cBlock, tmp);
+    }
+    //std::cout << "cBlock: " << cBlock << std::endl;
+    mpz_t m;
+    mpz_init(m);
+    mpz_set_str(m, cBlock, 10);
+    if (m >= (pubKey.n - 1)) {
+      std::cerr << "ERROR: m >= (n -1)" << std::endl;
+    }
+    mpz_t c;
+    mpz_init(c);
+    // c = m^e mod n
+    mpz_powm(c, m, pubKey.e, pubKey.n);
+    mpz_out_str(of, 10, c);
+    fprintf(of, "\n");
+    cBlock[0] = '\0';
   }
 
-  return cipherText;
-}
+  fclose(of);
+  free(cBlock);
+  free(block);
 
-// ============================================================================
-/**
-* Write cipher text to file
-*/
-void writeCipherText(std::string& cipherText)
-{
-  std::string fileName("scott-axcell.ciphertext");
-  std::ofstream ofs(fileName, std::ios::trunc | std::ios::out);
-  if (!ofs.good()) {
-    std::cerr << "ERROR: not able to write file '" << fileName << "'" << std::endl;
-    exit(1);
-  }
-
-  ofs << cipherText;
-  ofs << '\n';
-  ofs.close();
+  std::cout << "Wrote ciphertext file 'scott-axcell.ciphertext'" << std::endl;
 }
 
 // ============================================================================
@@ -110,21 +70,18 @@ int main(int argc, char *argv[])
   std::string eStr(keyStr.substr(0, idx));
   std::string nStr(keyStr.substr(idx + 2));
   
-  std::cout << "Read eStr: " << eStr << std::endl;
-  std::cout << "Read nStr: " << nStr << std::endl;
+  //std::cout << "Read eStr: " << eStr << std::endl;
+  //std::cout << "Read nStr: " << nStr << std::endl;
 
   PublicRSAKey pubKey;
   mpz_set_str(pubKey.e, eStr.c_str(), 10); // use base 10
   mpz_set_str(pubKey.n, nStr.c_str(), 10); // use base 10
 
-  std::cout << "Read pubKey.e: " << pubKey.e << std::endl;
-  std::cout << "Read pubKey.n: " << pubKey.n << std::endl;
+  //std::cout << "Read pubKey.e: " << pubKey.e << std::endl;
+  //std::cout << "Read pubKey.n: " << pubKey.n << std::endl;
 
   std::string plainText = readFirstLineOfFile(plainTextFile);
-  std::string cipherText = encryptPlainText(pubKey, plainText);
-  std::cout << "PlainText: " << plainText << std::endl;
-  std::cout << "CipherText: " << cipherText << std::endl;
-  writeCipherText(cipherText);
+  encryptPlainText(pubKey, plainText);
 
   return 0;
 }
