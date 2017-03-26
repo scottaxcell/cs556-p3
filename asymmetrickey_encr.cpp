@@ -31,10 +31,10 @@ std::string encryptPlainText(PublicRSAKey pubKey, std::string &plainText)
       std::cout << "block: '" << blockStr << "' size: " << blockStr.size() << std::endl;
 
       // Convert m to ascii integer equivalent
-      char *intStr = new char[plainText.size() * 3 + 1];
+      char *intStr = new char[blockStr.size() * 3 + 1];
       intStr[0] = '\0';
-      for (int i = 0; i < plainText.size(); i++) {
-        int tmpInt = (int)plainText[i];
+      for (int j = 0; j < blockStr.size(); j++) {
+        int tmpInt = (int)blockStr[j];
         char tmpChars[4];
         sprintf(tmpChars, "%03d", tmpInt);
         strcat(intStr, tmpChars);
@@ -49,7 +49,8 @@ std::string encryptPlainText(PublicRSAKey pubKey, std::string &plainText)
 
       mpz_t c;
       mpz_init(c);
-      encryptBlock(pubKey, m, c);
+      // c = m^e mod n
+      mpz_powm(c, m, pubKey.e, pubKey.n);
       std::cout << "c: " << c << std::endl;
       char *cStr = mpz_get_str(nullptr, 10, c);
       mpz_get_str(cStr, 10, c);

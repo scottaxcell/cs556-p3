@@ -7,15 +7,20 @@
 std::string convertIntToChar(char *intStr)
 {
   std::string result;
-  char *tmpStr = new char[strlen(intStr) + 1];
+  std::cout << "creating char[] of size: " << strlen(intStr) + 3 << std::endl;
+  char *tmpStr = new char[strlen(intStr) + 3];
 
   // Pad integer string with zeros if necesary
   int modulus = strlen(intStr) % 3;
-  if (modulus == 1)
+  if (modulus == 1) {
     strcpy(tmpStr, "00");
-  else if (modulus == 2)
+    strcat(tmpStr, intStr);
+  } else if (modulus == 2) {
     strcpy(tmpStr, "0");
-  strcat(tmpStr, intStr);
+    strcat(tmpStr, intStr);
+  } else {
+    strcpy(tmpStr, intStr);
+  }
 
   for (int i = 0; i <= (strlen(tmpStr) - 3); i += 3) {
     int n = tmpStr[i] - '0';
